@@ -18,6 +18,7 @@ class Query
     public $unknown_langs = array();
     public $unsorted_words = array();
     public $disallowed_in_langs = array();
+    public $mainheader_langs = array();
 
     public function __construct($argv)
     {
@@ -60,6 +61,10 @@ class Query
                 $this->flags |= Page::CHECK_FOR_DISALLOWED_ITEMS_IN_LANGUAGES;
                 $this->cmds[$cmd] = true;
                 break;
+             case 'mainheader':
+                $this->flags |= Page::CHECK_FOR_MAINHEADER_LANGS;
+                $this->cmds[$cmd] = true;
+                break;
              case '-b':
                 $this->bot = true;
                 break;
@@ -75,6 +80,8 @@ class Query
           $this->help('broken cannot be fixed automatically');
         if ($this->bot and isset($this->cmds['dislang']))
           $this->help('dislang cannot be fixed automatically');
+        if ($this->bot and isset($this->cmds['mainheader']))
+          $this->help('mainheader cannot be fixed automatically');
     }
 
     private function parseXML()
@@ -122,6 +129,8 @@ class Query
             $this->unsorted_words[$part][] = $word;
         if (!empty($page->disallowed_in_langs))
           $this->disallowed_in_langs[$word] = $page->disallowed_in_langs;
+        if (!empty($page->mainheader_langs))
+          $this->mainheader_langs[$word] = $page->mainheader_langs;
     }
 
     private function createOutput()
@@ -180,6 +189,13 @@ class Query
         {
             echo PHP_EOL.'== γλώσσες που περιέχουν ένα απαγορευμένο στοιχείο =='.PHP_EOL;
             foreach ($this->disallowed_in_langs as $word => $langs)
+              echo '* [['.$word.']] ('.implode(', ',$langs).')'.PHP_EOL;
+        }
+
+        if (isset($this->cmds['mainheader']))
+        {
+            echo PHP_EOL.'== τίτλος επιπέδου 1 ή 2 =='.PHP_EOL;
+            foreach ($this->mainheader_langs as $word => $langs)
               echo '* [['.$word.']] ('.implode(', ',$langs).')'.PHP_EOL;
         }
     }

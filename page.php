@@ -51,6 +51,7 @@ class Page
     final const CHECK_FOR_BROKEN_LANGS                  = 1;
     final const CHECK_ORDER_OF_LANGS                    = 2;
     final const CHECK_FOR_DISALLOWED_ITEMS_IN_LANGUAGES = 4;
+    final const CHECK_FOR_MAINHEADER_LANGS              = 8;
 
     static private $order;
 
@@ -75,6 +76,7 @@ class Page
     public $unknown_langs = array();
     public $unsorted_word = array();
     public $disallowed_in_langs = array();
+    public $mainheader_langs = array();
 
     public function __construct($word, $text)
     {
@@ -240,6 +242,10 @@ class Page
           foreach (self::$order as $l=>$_)
             if (strpos($this->prefix,'{{-'.$l.'-}}')!==false)
               $this->broken_langs[] = array('',$l);
+
+        if ($this->flags & self::CHECK_FOR_MAINHEADER_LANGS)
+          if (preg_match('/^\s*==?[^=]+=+/',$this->prefix,$erg))
+            $this->mainheader_langs[] = '';
     }
 
     private function checkLangs()
@@ -249,6 +255,11 @@ class Page
             foreach (self::$order as $l=>$_)
               if (strpos($t,'{{-'.$l.'-}}')!==false)
                 $this->broken_langs[] = array($ll,$l);
+
+        if ($this->flags & self::CHECK_FOR_MAINHEADER_LANGS)
+          foreach ($this->langs as list($ll,$t))
+            if (preg_match('/^\s*==?[^=]+=+/',$t,$erg))
+              $this->mainheader_langs[] = $ll;
 
         if ($this->flags & self::CHECK_FOR_DISALLOWED_ITEMS_IN_LANGUAGES)
           $this->checkDisallowedLanguageItems();
