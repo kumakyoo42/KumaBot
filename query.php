@@ -17,6 +17,7 @@ class Query
     public $double_langs = array();
     public $unknown_langs = array();
     public $unsorted_words = array();
+    public $disallowed_in_langs = array();
 
     public function __construct($argv)
     {
@@ -55,6 +56,10 @@ class Query
                 $this->flags |= Page::CHECK_ORDER_OF_LANGS;
                 $this->cmds[$cmd] = true;
                 break;
+             case 'dislang':
+                $this->flags |= Page::CHECK_FOR_DISALLOWED_ITEMS_IN_LANGUAGES;
+                $this->cmds[$cmd] = true;
+                break;
              case '-b':
                 $this->bot = true;
                 break;
@@ -67,7 +72,9 @@ class Query
           $this->help('No task');
 
         if ($this->bot and isset($this->cmds['broken']))
-          $this->help('broken cannot be fixed');
+          $this->help('broken cannot be fixed automatically');
+        if ($this->bot and isset($this->cmds['dislang']))
+          $this->help('dislang cannot be fixed automatically');
     }
 
     private function parseXML()
@@ -113,6 +120,8 @@ class Query
         if (!empty($page->unsorted_word))
           foreach ($page->unsorted_word as $part=>$_)
             $this->unsorted_words[$part][] = $word;
+        if (!empty($page->disallowed_in_langs))
+          $this->disallowed_in_langs[$word] = $page->disallowed_in_langs;
     }
 
     private function createOutput()
@@ -166,6 +175,13 @@ class Query
                   echo '* [['.$word.']] ('.implode(', ',array_keys($langs)).')'.PHP_EOL;
             }
         }
+
+        if (isset($this->cmds['dislang']))
+        {
+            echo PHP_EOL.'== γλώσσες που περιέχουν ένα απαγορευμένο στοιχείο =='.PHP_EOL;
+            foreach ($this->disallowed_in_langs as $word => $langs)
+              echo '* [['.$word.']] ('.implode(', ',$langs).')'.PHP_EOL;
+        }
     }
 
     private function help($error=false)
@@ -177,6 +193,7 @@ class Query
         fwrite(STDERR,'commands are:'.PHP_EOL);
         fwrite(STDERR,'  broken (identify broken language links)'.PHP_EOL);
         fwrite(STDERR,'  order (identify language parts in wrong order)'.PHP_EOL);
+        fwrite(STDERR,'  dislang (identify invalid objects in language parts)'.PHP_EOL);
 
         die();
     }

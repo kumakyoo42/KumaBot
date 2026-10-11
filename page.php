@@ -48,8 +48,9 @@ unset($order);
 
 class Page
 {
-    final const CHECK_FOR_BROKEN_LANGS = 1;
-    final const CHECK_ORDER_OF_LANGS   = 2;
+    final const CHECK_FOR_BROKEN_LANGS                  = 1;
+    final const CHECK_ORDER_OF_LANGS                    = 2;
+    final const CHECK_FOR_DISALLOWED_ITEMS_IN_LANGUAGES = 4;
 
     static private $order;
 
@@ -73,6 +74,7 @@ class Page
     public $double_langs = array();
     public $unknown_langs = array();
     public $unsorted_word = array();
+    public $disallowed_in_langs = array();
 
     public function __construct($word, $text)
     {
@@ -248,8 +250,22 @@ class Page
               if (strpos($t,'{{-'.$l.'-}}')!==false)
                 $this->broken_langs[] = array($ll,$l);
 
+        if ($this->flags & self::CHECK_FOR_DISALLOWED_ITEMS_IN_LANGUAGES)
+          $this->checkDisallowedLanguageItems();
+
         if ($this->flags & self::CHECK_ORDER_OF_LANGS)
           $this->checkOrderOfLangs();
+    }
+
+    private function checkDisallowedLanguageItems()
+    {
+        foreach ($this->langs as list($ll,$t))
+        {
+            if (strpos($t,'{{δείτε'))
+              $this->disallowed_in_langs[] = $ll;
+            if (strpos($t,'{{also'))
+              $this->disallowed_in_langs[] = $ll;
+        }
     }
 
     private function checkOrderOfLangs()
