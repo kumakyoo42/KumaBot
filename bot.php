@@ -5,16 +5,22 @@ require_once('page.php');
 $bot = new Bot();
 $bot->readCredentials();
 $bot->readTasks($argv[1]??'tasks');
+$bot->writeStartLog();
 $bot->execute();
+$bot->writeFinishLog();
 
 class Bot
 {
     final const BASE_URL = 'https://el.wiktionary.org/w/rest.php/v1/page/';
 
     private $bot_name;
+    private $log_page;
     private $auth_token;
     private $sleep = 30000;
     private $tasks = array();
+
+    private $success;
+    private $skipped;
 
     public function readCredentials()
     {
@@ -22,6 +28,7 @@ class Bot
         {
             $f = file('credentials');
             $this->bot_name = trim(array_shift($f));
+            $this->log_page = trim(array_shift($f));
             $this->auth_token = trim(array_shift($f));
         }
         catch (Exception $e)
@@ -84,6 +91,7 @@ class Bot
         if ($page===false)
         {
             $this->log('reading page failed. Skipping.');
+            $this->skipped++;
             return;
         }
         list($id,$wikitext) = $page;
@@ -94,6 +102,7 @@ class Bot
         if (!$page->isValid())
         {
             $this->log('page is not valid. Skipping.');
+            $this->skipped++;
             return;
         }
 
@@ -101,16 +110,19 @@ class Bot
         if (!empty($page->broken_langs))
         {
             $this->log('page contains broken languages. Skipping.');
+            $this->skipped++;
             return;
         }
         if (!empty($page->unknown_langs))
         {
             $this->log('page contains unknown languages. Skipping.');
+            $this->skipped++;
             return;
         }
         if (empty($page->unsorted_word))
         {
             $this->log('page seems to be already sorted. Skipping.');
+            $this->skipped++;
             return;
         }
 
@@ -118,6 +130,7 @@ class Bot
             || isset($page->unsorted_word['mixed']))
         {
             $this->log('page contains greek languages. Skipping due to policy.');
+            $this->skipped++;
             return;
         }
 
@@ -130,18 +143,20 @@ class Bot
         if ($new_text==$wikitext)
         {
             $this->log('nothing changed after sorting. Skipping.');
+            $this->skipped++;
             return;
         }
 
         $this->writePage($word, $id, $new_text, 'ταξινομήθηκε η σειρά των γλωσσών');
 
-        $this->log($word.' successfully changed');
+        $this->log('"'.$word.'" successfully changed');
+        $this->success++;
         $this->sleep();
     }
 
     private function readPage($word)
     {
-        $ch = curl_init(self::BASE_URL.$word);
+        $ch = curl_init(self::BASE_URL.str_replace('/','%2F',$word));
         if ($ch===false)
           $this->die('cannot init curl');
 
@@ -186,7 +201,7 @@ class Bot
         if ($ch===false)
           $this->die('cannot init curl');
 
-        if (!curl_setopt($ch,CURLOPT_URL,self::BASE_URL.$word))
+        if (!curl_setopt($ch,CURLOPT_URL,self::BASE_URL.str_replace('/','%2F',$word)))
           $this->die('setup of curl failed');
         if (!curl_setopt($ch,CURLOPT_CUSTOMREQUEST,'PUT'))
           $this->die('setup of curl failed');
@@ -210,6 +225,63 @@ class Bot
         $new_title = $json['title']??false;
         if ($new_title!==$word)
           $this->die('something went wrong while writing: '.print_r($json,true));
+    }
+
+    //////////////////////////////////////////////////////////////////
+
+    public function writeStartLog()
+    {
+        $h = $this->readPage($this->log_page);
+        if ($h===false)
+          $this->die('something odd happend');
+        list($id, $text) = $h;
+
+        $text .=  '== Log ('.date("r").') =='.PHP_EOL.PHP_EOL;
+
+        $last = false;
+        foreach ($this->tasks as list($cmd,$param))
+        {
+            if ($cmd==='SLEEP')
+            {
+                $text .= ' Set sleeping time between two writes to '.($param/1000).' seconds.'.PHP_EOL;
+                continue;
+            }
+            if ($cmd!==$last)
+            {
+                if ($last!==false)
+                  $text .= ' Scheduled: '.$count.' times a '.$last.' action.'.PHP_EOL;
+                $count = 1;
+                $last = $cmd;
+                continue;
+            }
+
+            $count++;
+        }
+        if ($last!==false)
+          $text .= ' Scheduled: '.$count.' times a '.$last.' action.'.PHP_EOL;
+
+        $this->writePage($this->log_page, $id, $text, 'ενημέρωση των αρχείων καταγραφής');
+        $this->log('wrote start log');
+
+        $this->success = 0;
+        $this->skipped = 0;
+    }
+
+    public function writeFinishLog()
+    {
+        $h = $this->readPage($this->log_page);
+        if ($h===false)
+          $this->die('something odd happend');
+        list($id, $text) = $h;
+
+        $text .= PHP_EOL; // mediawiki removes trailing whitespace
+        $text .= ' =================================================================='.PHP_EOL;
+        $text .= ' '.$this->success.' tasks processed successfully.'.PHP_EOL;
+        $text .= ' '.$this->skipped.' tasks skipped.'.PHP_EOL;
+        $text .= ' Finished at '.date("r").'.'.PHP_EOL.PHP_EOL;
+
+        $this->writePage($this->log_page, $id, $text, 'ενημέρωση των αρχείων καταγραφής');
+        $this->log('wrote finish log');
     }
 
     //////////////////////////////////////////////////////////////////
