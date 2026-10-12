@@ -43,7 +43,7 @@ class Bot
         $before = count($this->tasks);
         try
         {
-            $f = file('tasks');
+            $f = file($filename);
             foreach ($f as $line)
             {
                 list($cmd,$param) = explode(' ',trim($line),2);
