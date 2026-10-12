@@ -154,9 +154,9 @@ class Bot
         $this->sleep();
     }
 
-    private function readPage($word)
+    private function readPage($word,$add='')
     {
-        $ch = curl_init(self::BASE_URL.str_replace('/','%2F',$word));
+        $ch = curl_init(self::BASE_URL.str_replace('/','%2F',$word).$add);
         if ($ch===false)
           $this->die('cannot init curl');
 
@@ -231,7 +231,7 @@ class Bot
 
     public function writeStartLog()
     {
-        $h = $this->readPage($this->log_page);
+        $h = $this->readPage($this->log_page,'?timestamp=1728650000');
         if ($h===false)
           $this->die('something odd happend');
         list($id, $text) = $h;
@@ -269,7 +269,7 @@ class Bot
 
     public function writeFinishLog()
     {
-        $h = $this->readPage($this->log_page);
+        $h = $this->readPage($this->log_page,'?timestamp=1728650001');
         if ($h===false)
           $this->die('something odd happend');
         list($id, $text) = $h;
