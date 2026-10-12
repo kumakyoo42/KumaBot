@@ -236,7 +236,7 @@ class Bot
           $this->die('something odd happend');
         list($id, $text) = $h;
 
-        $text .=  '== Log ('.date("r").') =='.PHP_EOL.PHP_EOL;
+        $text .=  PHP_EOL.PHP_EOL.'== Log ('.date("r").') =='.PHP_EOL.PHP_EOL;
 
         $last = false;
         foreach ($this->tasks as list($cmd,$param))
