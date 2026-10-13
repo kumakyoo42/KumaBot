@@ -47,6 +47,14 @@ class Bot
             foreach ($f as $line)
             {
                 list($cmd,$param) = explode(' ',trim($line),2);
+
+                if ($cmd=='SLEEP')
+                {
+                    $this->sleep = intval($param);
+                    $this->log('delay set to '.$this->sleep.' ms');
+                    continue;
+                }
+
                 $this->tasks[] = array($cmd,$param);
             }
         }
@@ -68,10 +76,6 @@ class Bot
 
             switch ($cmd)
             {
-             case 'SLEEP':
-                $this->sleep = intval($param);
-                $this->log('delay set to '.$this->sleep.' ms');
-                break;
              case 'SORT':
                 $this->sort($param);
                 break;
