@@ -231,7 +231,7 @@ class Bot
 
     public function writeStartLog()
     {
-        $h = $this->readPage($this->log_page,'?timestamp=1728650000');
+        $h = $this->readPage($this->log_page,'?timestamp='.time());
         if ($h===false)
           $this->die('something odd happend');
         list($id, $text) = $h;
@@ -269,7 +269,7 @@ class Bot
 
     public function writeFinishLog()
     {
-        $h = $this->readPage($this->log_page,'?timestamp=1728650001');
+        $h = $this->readPage($this->log_page,'?timestamp='.time());
         if ($h===false)
           $this->die('something odd happend');
         list($id, $text) = $h;
