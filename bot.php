@@ -233,6 +233,8 @@ class Bot
 
     public function writeStartLog()
     {
+        $this->log('ready to go, waiting 10 seconds');
+        sleep(10);
         $h = $this->readPage($this->log_page,'?timestamp='.time());
         if ($h===false)
           $this->die('something odd happend');
