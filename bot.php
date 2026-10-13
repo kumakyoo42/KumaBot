@@ -60,8 +60,10 @@ class Bot
     public function execute()
     {
         $this->log('starting execution of '.count($this->tasks).' tasks');
+        $total = count($this->tasks);
         while (!empty($this->tasks))
         {
+            fwrite(STDERR,($total-count($this->tasks)).'/'.$total."  \r");
             list($cmd,$param) = array_shift($this->tasks);
 
             switch ($cmd)
@@ -301,7 +303,7 @@ class Bot
 
     private function log($msg)
     {
-        fwrite(STDERR,$msg.PHP_EOL);
+        fwrite(STDOUT,$msg.PHP_EOL);
     }
 }
 
