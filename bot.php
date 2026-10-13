@@ -18,6 +18,7 @@ class Bot
     private $auth_token;
     private $sleep = 30000;
     private $tasks = array();
+    private $abort = 0;
 
     private $success;
     private $skipped;
@@ -239,6 +240,8 @@ class Bot
     {
         $this->log('ready to go, waiting 10 seconds');
         sleep(10);
+        $this->installSignalHandler();
+
         $h = $this->readPage($this->log_page,'?timestamp='.time());
         if ($h===false)
           $this->die('something odd happend');
@@ -286,10 +289,22 @@ class Bot
         $text .= ' =================================================================='.PHP_EOL;
         $text .= ' '.$this->success.' tasks processed successfully.'.PHP_EOL;
         $text .= ' '.$this->skipped.' tasks skipped.'.PHP_EOL;
-        $text .= ' Finished at '.date("r").'.'.PHP_EOL.PHP_EOL;
+        $text .= ' '.($this->abort===2?'Aborted':'Finished').' at '.date("r").'.'.PHP_EOL.PHP_EOL;
 
         $this->writePage($this->log_page, $id, $text, 'ενημέρωση των αρχείων καταγραφής');
         $this->log('wrote finish log');
+    }
+
+    private function installSignalHandler()
+    {
+        $this->abort = 1;
+        pcntl_async_signals(true);
+        pcntl_signal(SIGINT, array($this, "signalHandler"));
+    }
+
+    private function signalHandler()
+    {
+        $this->die('abort due to ctrl-C');
     }
 
     //////////////////////////////////////////////////////////////////
@@ -303,6 +318,11 @@ class Bot
     private function die($msg)
     {
         $this->log($msg);
+        if ($this->abort===1)
+        {
+            $this->abort = 2;
+            $this->writeFinishLog();
+        }
         $this->log('bot stopped due to errors');
         die();
     }
