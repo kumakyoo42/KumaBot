@@ -52,7 +52,7 @@ class Bot
                 if ($cmd=='SLEEP')
                 {
                     $this->sleep = intval($param);
-                    $this->log('delay set to '.$this->sleep.' ms');
+                    $this->log("\033[31;1mdelay set to ".($this->sleep/1000)." seconds\033[0m");
                     continue;
                 }
 
