@@ -2,9 +2,11 @@
 
 require_once('page.php');
 
+if (!isset($argv[1])) die('Usage: php bot.php <taskfile>'.PHP_EOL);
+
 $bot = new Bot();
 $bot->readCredentials();
-$bot->readTasks($argv[1]??'tasks');
+$bot->readTasks($argv[1]);
 $bot->writeStartLog();
 $bot->execute();
 $bot->writeFinishLog();
