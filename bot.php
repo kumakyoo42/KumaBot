@@ -250,15 +250,11 @@ class Bot
         list($id, $text) = $h;
 
         $text .=  PHP_EOL.PHP_EOL.'== Log ('.date("r").') =='.PHP_EOL.PHP_EOL;
+        $text .= ' Set sleeping time between two writes to '.($this->sleep/1000).' seconds.'.PHP_EOL;
 
         $last = false;
         foreach ($this->tasks as list($cmd,$param))
         {
-            if ($cmd==='SLEEP')
-            {
-                $text .= ' Set sleeping time between two writes to '.($param/1000).' seconds.'.PHP_EOL;
-                continue;
-            }
             if ($cmd!==$last)
             {
                 if ($last!==false)
