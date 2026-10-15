@@ -74,18 +74,22 @@ class Bot
         $total = count($this->tasks);
         while (!empty($this->tasks))
         {
-            fwrite(STDERR,($total-count($this->tasks)).'/'.$total."  \r");
             list($cmd,$param) = array_shift($this->tasks);
 
+            $wait = true;
             switch ($cmd)
             {
              case 'SORT':
-                $this->sort($param);
+                $wait = $this->sort($param);
                 break;
              default:
                 $this->die('unknown command: '.$cmd);
                 break;
             }
+
+            fwrite(STDERR,($total-count($this->tasks)).'/'.$total."  \r");
+            if ($wait && !empty($this->tasks))
+              $this->sleep();
         }
         $this->log('execution of tasks finished');
     }
@@ -101,7 +105,7 @@ class Bot
         {
             $this->log('reading page failed. Skipping.');
             $this->skipped++;
-            return;
+            return false;
         }
         list($id,$wikitext) = $page;
 
@@ -112,7 +116,7 @@ class Bot
         {
             $this->log('page is not valid. Skipping.');
             $this->skipped++;
-            return;
+            return false;
         }
 
         $page->analyze();
@@ -120,19 +124,19 @@ class Bot
         {
             $this->log('page contains broken languages. Skipping.');
             $this->skipped++;
-            return;
+            return false;
         }
         if (!empty($page->unknown_langs))
         {
             $this->log('page contains unknown languages. Skipping.');
             $this->skipped++;
-            return;
+            return false;
         }
         if (empty($page->unsorted_word))
         {
             $this->log('page seems to be already sorted. Skipping.');
             $this->skipped++;
-            return;
+            return false;
         }
 
         if (isset($page->unsorted_word['greek'])
@@ -140,7 +144,7 @@ class Bot
         {
             $this->log('page contains greek languages. Skipping due to policy.');
             $this->skipped++;
-            return;
+            return false;
         }
 
         if (!isset($page->unsorted_word['non_greek']) || count($page->unsorted_word)!=1)
@@ -153,14 +157,14 @@ class Bot
         {
             $this->log('nothing changed after sorting. Skipping.');
             $this->skipped++;
-            return;
+            return false;
         }
 
         $this->writePage($word, $id, $new_text, 'ταξινομήθηκε η σειρά των γλωσσών');
 
         $this->log('"'.$word.'" successfully changed');
         $this->success++;
-        $this->sleep();
+        return true;
     }
 
     private function readPage($word,$add='')
