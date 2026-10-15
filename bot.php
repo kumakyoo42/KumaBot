@@ -54,7 +54,7 @@ class Bot
                 if ($cmd=='SLEEP')
                 {
                     $this->sleep = intval($param);
-                    $this->log("\033[31;1mdelay set to ".($this->sleep/1000)." seconds\033[0m");
+                    $this->log("\033[31;1mdelay set to ".($this->sleep/1000)." seconds\033[0m",true);
                     continue;
                 }
 
@@ -65,7 +65,7 @@ class Bot
         {
             $this->die('tasks file missing or damaged');
         }
-        $this->log((count($this->tasks)-$before).' tasks read successfully');
+        $this->log((count($this->tasks)-$before).' tasks read successfully',true);
     }
 
     public function execute()
@@ -240,7 +240,7 @@ class Bot
 
     public function writeStartLog()
     {
-        $this->log('ready to go, waiting 10 seconds');
+        $this->log('ready to go, waiting 10 seconds',true);
         sleep(10);
         $this->installSignalHandler();
 
@@ -329,9 +329,13 @@ class Bot
         die();
     }
 
-    private function log($msg)
+    private function log($msg, $important=false)
     {
-        fwrite(STDOUT,$msg.PHP_EOL);
+        if ($important)
+          echo $msg.PHP_EOL;
+        $res = fopen('log','a');
+        fwrite($res,$msg.PHP_EOL);
+        fclose($res);
     }
 }
 
