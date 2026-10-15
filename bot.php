@@ -163,7 +163,7 @@ class Bot
 
     private function readPage($word,$add='')
     {
-        $ch = curl_init(self::BASE_URL.str_replace('/','%2F',$word).$add);
+        $ch = curl_init(self::BASE_URL.urlencode(str_replace(' ','_',$word)).$add);
         if ($ch===false)
           $this->die('cannot init curl');
 
@@ -208,7 +208,7 @@ class Bot
         if ($ch===false)
           $this->die('cannot init curl');
 
-        if (!curl_setopt($ch,CURLOPT_URL,self::BASE_URL.str_replace('/','%2F',$word)))
+        if (!curl_setopt($ch,CURLOPT_URL,self::BASE_URL.urlencode(str_replace(' ','_',$word))))
           $this->die('setup of curl failed');
         if (!curl_setopt($ch,CURLOPT_CUSTOMREQUEST,'PUT'))
           $this->die('setup of curl failed');
