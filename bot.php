@@ -7,17 +7,19 @@ if (!isset($argv[1])) die('Usage: php bot.php <taskfile>'.PHP_EOL);
 $bot = new Bot();
 $bot->readCredentials();
 $bot->readTasks($argv[1]);
+$bot->readCSRFToken();
 $bot->writeStartLog();
 $bot->execute();
 $bot->writeFinishLog();
 
 class Bot
 {
-    final const BASE_URL = 'https://el.wiktionary.org/w/rest.php/v1/page/';
+    final const BASE_URL = 'https://el.wiktionary.org/w/api.php';
 
     private $bot_name;
     private $log_page;
     private $auth_token;
+    private $csrf_token;
     private $sleep = 30000;
     private $tasks = array();
     private $abort = 0;
@@ -66,6 +68,42 @@ class Bot
             $this->die('tasks file missing or damaged');
         }
         $this->log((count($this->tasks)-$before).' tasks read successfully',true);
+    }
+
+    public function readCSRFToken()
+    {
+        $fields = array('action' => 'query',
+                        'meta' => 'tokens',
+                        'format' => 'json');
+
+        $ch = curl_init();
+        if ($ch===false)
+          $this->die('cannot init curl');
+
+        if (!curl_setopt($ch, CURLOPT_URL, self::BASE_URL))
+          $this->die('setup of curl failed');
+        if (!curl_setopt($ch, CURLOPT_POST, true))
+          $this->die('setup of curl failed');
+        if (!curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($fields)))
+          $this->die('setup of curl failed');
+        if (!curl_setopt($ch, CURLOPT_USERAGENT, $this->bot_name))
+          $this->die('setup of curl failed');
+        if (!curl_setopt($ch, CURLOPT_HTTPHEADER, array('Authorization: Bearer '.$this->auth_token)))
+          $this->die('setup of curl failed');
+        if (!curl_setopt($ch, CURLOPT_RETURNTRANSFER, true))
+          $this->die('setup of curl failed');
+
+        $result = curl_exec($ch);
+        if ($result===false)
+          $this->die('execution of curl failed');
+
+        $json = json_decode($result, true);
+        if ($json===null)
+          $this->die('execution of curl failed: '.print_r($result,true));
+
+        $this->csrf_token = $json['query']['tokens']['csrftoken']??false;
+        if ($this->csrf_token===false)
+          $this->die('execution of curl failed: '.print_r($result,true));
     }
 
     public function execute()
@@ -167,16 +205,26 @@ class Bot
         return true;
     }
 
-    private function readPage($word,$add='')
+    private function readPage($word)
     {
-        $ch = curl_init(self::BASE_URL.urlencode(str_replace(' ','_',$word)).$add);
+        $fields = array('action' => 'parse',
+                        'page' => $word,
+                        'prop' => 'wikitext|revid',
+                        'format' => 'json');
+
+        $ch = curl_init(self::BASE_URL);
         if ($ch===false)
           $this->die('cannot init curl');
 
-        if (!curl_setopt($ch,CURLOPT_RETURNTRANSFER,true))
+        if (!curl_setopt($ch, CURLOPT_URL, self::BASE_URL))
           $this->die('setup of curl failed');
-
+        if (!curl_setopt($ch, CURLOPT_POST, true))
+          $this->die('setup of curl failed');
+        if (!curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($fields)))
+          $this->die('setup of curl failed');
         if (!curl_setopt($ch,CURLOPT_USERAGENT,$this->bot_name))
+          $this->die('setup of curl failed');
+        if (!curl_setopt($ch,CURLOPT_RETURNTRANSFER,true))
           $this->die('setup of curl failed');
 
         $result = curl_exec($ch);
@@ -185,17 +233,18 @@ class Bot
 
         $json = json_decode($result,true);
         if ($json===null)
-          $this->die('execution of curl failed: '.$result);
+          $this->die('execution of curl failed: '.print_r($result,true));
 
+        if (!isset($json['parse']))
+          $this->die('execution of curl failed: '.print_r($result,true));
+
+        $json = $json['parse'];
         $title = $json['title']??false;
-        $id = $json['latest']['id']??false;
-        $model = $json['content_model']??false;
-        $page = $json['source']??false;
+        $id = $json['revid']??false;
+        $page = $json['wikitext']['*']??false;
 
-        if ($model!=='wikitext')
-          $this->die('wrong content model: '.$model);
         if ($id===false || $page===false)
-          $this->die('something odd happend: '.$result);
+          $this->die('something odd happend: '.print_r($result,true));
 
         if ($title!==$word) return false;
 
@@ -204,25 +253,28 @@ class Bot
 
     private function writePage($word, $id, $text, $comment)
     {
-        $fields = json_encode(array('source' => $text,
-                                    'comment' => $comment,
-                                    'latest' => array('id' => $id)));
-
-        $authorization = 'Authorization: Bearer '.$this->auth_token;
+        $fields = array('action' => 'edit',
+                        'title' => $word,
+                        'text' => $text,
+                        'summary' => $comment,
+                        'bot' => 1,
+                        'baserevid' => $id,
+                        'token' => $this->csrf_token,
+                        'format' => 'json');
 
         $ch = curl_init();
         if ($ch===false)
           $this->die('cannot init curl');
 
-        if (!curl_setopt($ch,CURLOPT_URL,self::BASE_URL.urlencode(str_replace(' ','_',$word))))
+        if (!curl_setopt($ch,CURLOPT_URL,self::BASE_URL))
           $this->die('setup of curl failed');
-        if (!curl_setopt($ch,CURLOPT_CUSTOMREQUEST,'PUT'))
+        if (!curl_setopt($ch, CURLOPT_POST, true))
           $this->die('setup of curl failed');
-        if (!curl_setopt($ch,CURLOPT_POSTFIELDS,$fields))
-          $this->die('setup of curl failed');
-        if (!curl_setopt($ch,CURLOPT_HTTPHEADER,array('Content-Type: application/json',$authorization)))
+        if (!curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($fields)))
           $this->die('setup of curl failed');
         if (!curl_setopt($ch,CURLOPT_USERAGENT,$this->bot_name))
+          $this->die('setup of curl failed');
+        if (!curl_setopt($ch,CURLOPT_HTTPHEADER, array('Authorization: Bearer '.$this->auth_token)))
           $this->die('setup of curl failed');
         if (!curl_setopt($ch,CURLOPT_RETURNTRANSFER, true))
           $this->die('setup of curl failed');
@@ -233,9 +285,18 @@ class Bot
 
         $json = json_decode($result,true);
         if ($json===null)
-          $this->die('execution of curl failed: '.$result);
+          $this->die('execution of curl failed: '.print_r($result,true));
 
+        if (!isset($json['edit']))
+          $this->die('execution of curl failed: '.print_r($result,true));
+
+        $json = $json['edit'];
+        $result = $json['result']??false;
         $new_title = $json['title']??false;
+
+        if ($result!=='Success')
+          $this->die('something went wrong while writing: '.print_r($json,true));
+
         if ($new_title!==$word)
           $this->die('something went wrong while writing: '.print_r($json,true));
     }
@@ -248,7 +309,7 @@ class Bot
         sleep(10);
         $this->installSignalHandler();
 
-        $h = $this->readPage($this->log_page,'?timestamp='.time());
+        $h = $this->readPage($this->log_page);
         if ($h===false)
           $this->die('something odd happend');
         list($id, $text) = $h;
@@ -282,7 +343,7 @@ class Bot
 
     public function writeFinishLog()
     {
-        $h = $this->readPage($this->log_page,'?timestamp='.time());
+        $h = $this->readPage($this->log_page);
         if ($h===false)
           $this->die('something odd happend');
         list($id, $text) = $h;
