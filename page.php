@@ -70,6 +70,7 @@ class Page
     private $insert;
     private $prefix;
     private $langs;
+    private $postfix;
 
     public $broken_langs = array();
     public $double_langs = array();
@@ -211,7 +212,12 @@ class Page
 
     private function splitIntoLanguageParts()
     {
-        $parts = preg_split('/^==\s*{{-([a-z-]+)-}}\s*==\s*$/Um',$this->text,-1,PREG_SPLIT_DELIM_CAPTURE);
+        preg_match('/((\n{{κλείδα-ελλ}})|\n\[\[Κατηγορία:(.*)\]\]|\n)*$/',$this->text,$erg);
+        $pos = strrpos($this->text,trim($erg[0]));
+        $mainpart = substr($this->text,0,$pos);
+        $this->postfix = substr($this->text,$pos);
+
+        $parts = preg_split('/^==\s*{{-([a-z-]+)-}}\s*==\s*$/Um',$mainpart,-1,PREG_SPLIT_DELIM_CAPTURE);
         $this->prefix = $parts[0];
         $this->langs = array();
         for ($i=1;$i<count($parts);$i+=2)
@@ -226,6 +232,7 @@ class Page
             $this->text .= '=={{-'.$lang[0].'-}}=='.PHP_EOL.PHP_EOL;
             $this->text .= $lang[1];
         }
+        $this->text .= $this->postfix;
     }
 
     //////////////////////////////////////////////////////////////////
