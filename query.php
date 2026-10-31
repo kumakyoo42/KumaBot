@@ -210,6 +210,7 @@ class Query
         fwrite(STDERR,'  broken (identify broken language links)'.PHP_EOL);
         fwrite(STDERR,'  order (identify language parts in wrong order)'.PHP_EOL);
         fwrite(STDERR,'  dislang (identify invalid objects in language parts)'.PHP_EOL);
+        fwrite(STDERR,'  mainheader (identify wrong first or second level headers)'.PHP_EOL);
 
         die();
     }
