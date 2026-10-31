@@ -94,6 +94,8 @@ class Bot
           $this->die('setup of curl failed');
         if (!curl_setopt($ch, CURLOPT_RETURNTRANSFER, true))
           $this->die('setup of curl failed');
+        if (!curl_setopt($ch, CURLOPT_COOKIEJAR, 'cookies.txt'))
+          $this->die('setup of curl failed');
 
         $result = curl_exec($ch);
         if ($result===false)
@@ -214,7 +216,7 @@ class Bot
                         'prop' => 'wikitext|revid',
                         'format' => 'json');
 
-        $ch = curl_init(self::BASE_URL);
+        $ch = curl_init();
         if ($ch===false)
           $this->die('cannot init curl');
 
@@ -224,9 +226,9 @@ class Bot
           $this->die('setup of curl failed');
         if (!curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($fields)))
           $this->die('setup of curl failed');
-        if (!curl_setopt($ch,CURLOPT_USERAGENT,$this->bot_auth))
+        if (!curl_setopt($ch, CURLOPT_USERAGENT,$this->bot_auth))
           $this->die('setup of curl failed');
-        if (!curl_setopt($ch,CURLOPT_RETURNTRANSFER,true))
+        if (!curl_setopt($ch, CURLOPT_RETURNTRANSFER,true))
           $this->die('setup of curl failed');
 
         $result = curl_exec($ch);
@@ -269,17 +271,19 @@ class Bot
         if ($ch===false)
           $this->die('cannot init curl');
 
-        if (!curl_setopt($ch,CURLOPT_URL,self::BASE_URL))
+        if (!curl_setopt($ch, CURLOPT_URL,self::BASE_URL))
           $this->die('setup of curl failed');
         if (!curl_setopt($ch, CURLOPT_POST, true))
           $this->die('setup of curl failed');
         if (!curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($fields)))
           $this->die('setup of curl failed');
-        if (!curl_setopt($ch,CURLOPT_USERAGENT,$this->bot_auth))
+        if (!curl_setopt($ch, CURLOPT_USERAGENT,$this->bot_auth))
           $this->die('setup of curl failed');
-        if (!curl_setopt($ch,CURLOPT_HTTPHEADER, array('Authorization: Bearer '.$this->auth_token)))
+        if (!curl_setopt($ch, CURLOPT_HTTPHEADER, array('Authorization: Bearer '.$this->auth_token)))
           $this->die('setup of curl failed');
-        if (!curl_setopt($ch,CURLOPT_RETURNTRANSFER, true))
+        if (!curl_setopt($ch, CURLOPT_COOKIEFILE, 'cookies.txt'))
+          $this->die('setup of curl failed');
+        if (!curl_setopt($ch, CURLOPT_RETURNTRANSFER, true))
           $this->die('setup of curl failed');
 
         $result = curl_exec($ch);
@@ -359,6 +363,7 @@ class Bot
 
         $this->writePage($this->log_page, $id, $text, 'ενημέρωση των αρχείων καταγραφής');
         $this->log('wrote finish log');
+        $this->die();
     }
 
     private function installSignalHandler()
@@ -381,15 +386,19 @@ class Bot
         usleep(1000*$this->sleep);
     }
 
-    private function die($msg)
+    private function die($msg=false)
     {
-        $this->log($msg);
-        if ($this->abort===1)
+        if ($msg!==false)
         {
-            $this->abort = 2;
-            $this->writeFinishLog();
+            $this->log($msg);
+            if ($this->abort===1)
+            {
+                $this->abort = 2;
+                $this->writeFinishLog();
+            }
+            $this->log('bot stopped due to errors');
         }
-        $this->log('bot stopped due to errors');
+        exec('rm -rf cookies.txt');
         die();
     }
 
