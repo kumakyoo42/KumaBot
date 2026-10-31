@@ -17,6 +17,7 @@ class Bot
     final const BASE_URL = 'https://el.wiktionary.org/w/api.php';
 
     private $bot_name;
+    private $bot_auth;
     private $log_page;
     private $auth_token;
     private $csrf_token;
@@ -33,6 +34,7 @@ class Bot
         {
             $f = file('credentials');
             $this->bot_name = trim(array_shift($f));
+            $this->bot_auth = trim(array_shift($f));
             $this->log_page = trim(array_shift($f));
             $this->auth_token = trim(array_shift($f));
         }
@@ -86,7 +88,7 @@ class Bot
           $this->die('setup of curl failed');
         if (!curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($fields)))
           $this->die('setup of curl failed');
-        if (!curl_setopt($ch, CURLOPT_USERAGENT, $this->bot_name))
+        if (!curl_setopt($ch, CURLOPT_USERAGENT, $this->bot_auth))
           $this->die('setup of curl failed');
         if (!curl_setopt($ch, CURLOPT_HTTPHEADER, array('Authorization: Bearer '.$this->auth_token)))
           $this->die('setup of curl failed');
@@ -222,7 +224,7 @@ class Bot
           $this->die('setup of curl failed');
         if (!curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($fields)))
           $this->die('setup of curl failed');
-        if (!curl_setopt($ch,CURLOPT_USERAGENT,$this->bot_name))
+        if (!curl_setopt($ch,CURLOPT_USERAGENT,$this->bot_auth))
           $this->die('setup of curl failed');
         if (!curl_setopt($ch,CURLOPT_RETURNTRANSFER,true))
           $this->die('setup of curl failed');
@@ -257,6 +259,7 @@ class Bot
                         'title' => $word,
                         'text' => $text,
                         'summary' => $comment,
+                        'assertuser' => $this->bot_name,
                         'bot' => 1,
                         'baserevid' => $id,
                         'token' => $this->csrf_token,
@@ -272,7 +275,7 @@ class Bot
           $this->die('setup of curl failed');
         if (!curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($fields)))
           $this->die('setup of curl failed');
-        if (!curl_setopt($ch,CURLOPT_USERAGENT,$this->bot_name))
+        if (!curl_setopt($ch,CURLOPT_USERAGENT,$this->bot_auth))
           $this->die('setup of curl failed');
         if (!curl_setopt($ch,CURLOPT_HTTPHEADER, array('Authorization: Bearer '.$this->auth_token)))
           $this->die('setup of curl failed');
