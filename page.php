@@ -283,6 +283,8 @@ class Page
               $this->disallowed_in_langs[] = $ll;
             if (strpos($t,'{{also'))
               $this->disallowed_in_langs[] = $ll;
+            if (strpos($t,'[[Κατηγορία:'))
+              $this->disallowed_in_langs[] = $ll;
         }
     }
 
