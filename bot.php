@@ -228,7 +228,11 @@ class Bot
           $this->die('setup of curl failed');
         if (!curl_setopt($ch, CURLOPT_USERAGENT,$this->bot_auth))
           $this->die('setup of curl failed');
-        if (!curl_setopt($ch, CURLOPT_RETURNTRANSFER,true))
+        if (!curl_setopt($ch, CURLOPT_HTTPHEADER, array('Authorization: Bearer '.$this->auth_token)))
+          $this->die('setup of curl failed');
+        if (!curl_setopt($ch, CURLOPT_COOKIEFILE, 'cookies.txt'))
+          $this->die('setup of curl failed');
+        if (!curl_setopt($ch, CURLOPT_RETURNTRANSFER, true))
           $this->die('setup of curl failed');
 
         $result = curl_exec($ch);
@@ -271,7 +275,7 @@ class Bot
         if ($ch===false)
           $this->die('cannot init curl');
 
-        if (!curl_setopt($ch, CURLOPT_URL,self::BASE_URL))
+        if (!curl_setopt($ch, CURLOPT_URL, self::BASE_URL))
           $this->die('setup of curl failed');
         if (!curl_setopt($ch, CURLOPT_POST, true))
           $this->die('setup of curl failed');
