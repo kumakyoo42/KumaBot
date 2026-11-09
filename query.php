@@ -205,7 +205,7 @@ class Query
         if ($error!==false) fwrite(STDERR,'Error: '.$error.PHP_EOL.PHP_EOL);
 
         fwrite(STDERR,'Usage:'.PHP_EOL);
-        fwrite(STDERR,'php check.php <xml-file> <commands...>'.PHP_EOL);
+        fwrite(STDERR,'php query.php <xml-file> <commands...>'.PHP_EOL);
         fwrite(STDERR,'commands are:'.PHP_EOL);
         fwrite(STDERR,'  broken (identify broken language links)'.PHP_EOL);
         fwrite(STDERR,'  order (identify language parts in wrong order)'.PHP_EOL);
