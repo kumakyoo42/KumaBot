@@ -209,7 +209,7 @@ class Query
         fwrite(STDERR,'options:'.PHP_EOL);
         fwrite(STDERR,'  -b (create output which can be used as input for the bot)'.PHP_EOL);
         fwrite(STDERR,'commands are:'.PHP_EOL);
-        fwrite(STDERR,'  broken (identify broken language links)'.PHP_EOL);
+        fwrite(STDERR,'  broken (identify broken language headers)'.PHP_EOL);
         fwrite(STDERR,'  order (identify language parts in wrong order)'.PHP_EOL);
         fwrite(STDERR,'  dislang (identify invalid objects in language parts)'.PHP_EOL);
         fwrite(STDERR,'  mainheader (identify wrong first or second level headers)'.PHP_EOL);
