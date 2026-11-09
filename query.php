@@ -205,7 +205,9 @@ class Query
         if ($error!==false) fwrite(STDERR,'Error: '.$error.PHP_EOL.PHP_EOL);
 
         fwrite(STDERR,'Usage:'.PHP_EOL);
-        fwrite(STDERR,'php query.php <xml-file> <commands...>'.PHP_EOL);
+        fwrite(STDERR,'php query.php <xml-file> [-b] <commands...>'.PHP_EOL);
+        fwrite(STDERR,'options:'.PHP_EOL);
+        fwrite(STDERR,'  -b (create output which can be used as input for the bot)'.PHP_EOL);
         fwrite(STDERR,'commands are:'.PHP_EOL);
         fwrite(STDERR,'  broken (identify broken language links)'.PHP_EOL);
         fwrite(STDERR,'  order (identify language parts in wrong order)'.PHP_EOL);
