@@ -53,6 +53,8 @@ class Bot
             $f = file($filename);
             foreach ($f as $line)
             {
+                $line = trim($line);
+                if ($line=='') continue;
                 list($cmd,$param) = explode(' ',trim($line),2);
 
                 if ($cmd=='SLEEP')
