@@ -232,7 +232,12 @@ class Page
             $this->text .= '=={{-'.$lang[0].'-}}=='.PHP_EOL.PHP_EOL;
             $this->text .= $lang[1];
         }
-        $this->text .= $this->postfix;
+
+        if (trim($this->postfix)!=='')
+        {
+            $this->text = rtrim($this->text);
+            $this->text .= PHP_EOL.PHP_EOL.trim($this->postfix);
+        }
     }
 
     //////////////////////////////////////////////////////////////////
