@@ -10,6 +10,7 @@ die();
 class Query
 {
     static private $commands = array(
+                                     'footsorted' => Page::CHECK_FOOTER_SORTED,
                                      'langtemp' => Page::CHECK_FOR_BROKEN_LANGS,
                                      'langsegs' => Page::CHECK_ORDER_OF_LANGS,
                                      'wrongtemp' => Page::CHECK_FOR_DISALLOWED_ITEMS_IN_LANGUAGES,
@@ -26,6 +27,7 @@ class Query
     public $unsorted_words = array();
     public $disallowed_in_langs = array();
     public $mainheader_langs = array();
+    public $unsorted_footer = array();
 
     public function __construct($argv)
     {
@@ -120,7 +122,6 @@ class Query
 
     private function saveResults($word,$page)
     {
-
         if (!empty($page->double_langs))
           $this->double_langs[$word] = $page->double_langs;
         if (!empty($page->unknown_langs))
@@ -139,6 +140,9 @@ class Query
         if (!empty($page->disallowed_in_langs))
           foreach ($page->disallowed_in_langs as $type=>$data)
             $this->disallowed_in_langs[$type][$word] = $data;
+
+        if (!$page->footer_sorted)
+          $this->unsorted_footer[] = $word;
     }
 
     private function createOutput()
@@ -252,6 +256,19 @@ class Query
           echo 'FIXELL '.$word.PHP_EOL;
     }
 
+    private function createOutputFootsorted()
+    {
+        echo PHP_EOL.'== Υποσέλιδο χωρίς ταξινόμηση =='.PHP_EOL;
+        foreach ($this->unsorted_footer as $word)
+          echo '* [['.$word.']]'.PHP_EOL;
+    }
+
+    private function createOutputFootsortedBot()
+    {
+        foreach ($this->unsorted_footer as $word)
+          echo 'SORTFOOT '.$word.PHP_EOL;
+    }
+
     private function help($error=false)
     {
         if ($error!==false)
@@ -263,11 +280,14 @@ SYNOPSIS
 
 OPTIONS
         -b
-            create output which can be used as input for the bot
+            Create output which can be used as input for the bot.
 
 COMMANDS
         all
             Execute all commands.
+
+        footsorted
+            Search for footers that have not been sorted correctly.
 
         langsegs
             Search for language segments that have not been sorted

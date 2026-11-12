@@ -52,6 +52,7 @@ class Page
     final const CHECK_ORDER_OF_LANGS                    = 2;
     final const CHECK_FOR_DISALLOWED_ITEMS_IN_LANGUAGES = 4;
     final const CHECK_FOR_MAINHEADER_LANGS              = 8;
+    final const CHECK_FOOTER_SORTED                     = 16;
 
     static private $order;
 
@@ -78,6 +79,7 @@ class Page
     public $unsorted_word = array();
     public $disallowed_in_langs = array();
     public $mainheader_langs = array();
+    public $footer_sorted = true;
 
     public function __construct($word, $text)
     {
@@ -246,6 +248,7 @@ class Page
     {
         $this->checkPrefix();
         $this->checkLangs();
+        $this->checkPostfix();
     }
 
     private function checkPrefix()
@@ -281,6 +284,13 @@ class Page
 
         if ($this->flags & self::CHECK_ORDER_OF_LANGS)
           $this->checkOrderOfLangs();
+    }
+
+    private function checkPostfix()
+    {
+        if ($this->flags & self::CHECK_FOOTER_SORTED)
+          if (!$this->checkFooterSorted())
+            $this->footer_sorted = false;
     }
 
     private function checkDisallowedLanguageItems($prefix=false)
@@ -334,6 +344,19 @@ class Page
             else if ($non_greek)
               $this->unsorted_word['non_greek'] = true;
         }
+    }
+
+    private function checkFooterSorted()
+    {
+        if ($this->postfix=='') return true;
+
+        preg_match_all('/({{κλείδα-ελλ}})|(\[\[Κατηγορία:.*\]\])/Usi',$this->postfix,$erg);
+        $elems = $erg[0];
+        for ($i=0;$i<count($elems)-1;$i++)
+          if (strcmp($elems[$i],$elems[$i+1])>=0)
+            return false;
+
+        return true;
     }
 }
 
