@@ -126,6 +126,9 @@ class Bot
              case 'SORTLANGS':
                 $wait = $this->sort($param);
                 break;
+             case 'FIXKAT': case 'FIXELL': case 'SORTFOOT':
+                $wait = $this->fixFooter($param, $cmd);
+                break;
              default:
                 $this->die('unknown command: '.$cmd);
                 break;
@@ -205,6 +208,62 @@ class Bot
         }
 
         $this->writePage($word, $id, $new_text, 'ταξινομήθηκε η σειρά των γλωσσών');
+
+        $this->log('"'.$word.'" successfully changed');
+        $this->success++;
+        return true;
+    }
+
+    private function fixFooter($word, $cmd)
+    {
+        $this->log('fixing footer of page "'.$word.'"');
+
+        $page = $this->readPage($word);
+        if ($page===false)
+        {
+            $this->log('reading page failed. Skipping.');
+            $this->skipped++;
+            return false;
+        }
+        list($id,$wikitext) = $page;
+
+        $page = new Page($word, $wikitext);
+        $page->setFlags(Page::CHECK_FOR_DISALLOWED_ITEMS_IN_LANGUAGES|Page::CHECK_FOOTER_SORTED);
+        $page->dissect();
+        if (!$page->isValid())
+        {
+            $this->log('page is not valid. Skipping.');
+            $this->skipped++;
+            return false;
+        }
+
+        $page->analyze();
+        if (empty($page->disallowed_in_langs['Κατηγορία'])
+            && empty($page->disallowed_in_langs['κλείδα-ελλ'])
+            && $page->footer_sorted)
+        {
+            $this->log('footer seems to be already fixed. Skipping.');
+            $this->skipped++;
+            return false;
+        }
+
+        if ($cmd=='FIXKAT')
+          $page->moveKatToFooter();
+        if ($cmd=='FIXELL')
+          $page->moveEllToFooter();
+        if ($cmd=='SORTFOOT')
+          $page->sortFooter();
+
+        $new_text = $page->join();
+
+        if ($new_text==$wikitext)
+        {
+            $this->log('nothing changed after fixing. Skipping.');
+            $this->skipped++;
+            return false;
+        }
+
+        $this->writePage($word, $id, $new_text, 'διόρθωση υποσέλιδου');
 
         $this->log('"'.$word.'" successfully changed');
         $this->success++;
@@ -399,6 +458,7 @@ class Bot
             $this->log($msg);
             if ($this->abort===1)
             {
+                sleep(60);
                 $this->abort = 2;
                 $this->writeFinishLog();
             }

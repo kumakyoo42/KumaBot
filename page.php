@@ -152,6 +152,65 @@ class Page
         return self::$order[$a[0]]-self::$order[$b[0]];
     }
 
+    public function moveKatToFooter()
+    {
+        $this->movePatternToFooter('/(\s*\[\[Κατηγορία:.*?\]\]\s*)/');
+    }
+
+    public function moveEllToFooter()
+    {
+        $this->movePatternToFooter('/{{κλείδα-ελλ}}/');
+    }
+
+    private function movePatternToFooter($pattern)
+    {
+        $new_prefix = $this->moveToFooter($pattern,$this->prefix);
+        if ($new_prefix!==$this->prefix)
+          $this->prefix = $new_prefix;
+
+        foreach ($this->langs as $k=>list($lang,$text))
+        {
+            $new_text = $this->moveToFooter($pattern,$text);
+            if ($new_text!==$text)
+              $this->langs[$k] = array($lang,$new_text);
+        }
+
+        $this->sortFooter();
+    }
+
+    private function moveToFooter($pattern,$text)
+    {
+        $parts = preg_split($pattern,$text,-1,PREG_SPLIT_DELIM_CAPTURE);
+        if (count($parts)==1) return $text;
+
+        for ($i=1;$i<count($parts);$i+=2)
+        {
+            $trimmed = trim($parts[$i]);
+            $pos = strpos($parts[$i],$trimmed);
+            $remaining = substr($parts[$i],0,$pos).substr($parts[$i],$pos+strlen($trimmed));
+            $this->postfix = $trimmed.PHP_EOL.$this->postfix;
+            if (strpos($remaining,PHP_EOL)!==false)
+              $parts[$i] = PHP_EOL;
+            elseif (strpos($remaining,' ')!==false)
+              $parts[$i] = ' ';
+            else
+              $parts[$i] = '';
+        }
+
+        return implode('',$parts);
+    }
+
+    public function sortFooter()
+    {
+        if ($this->postfix=='') return;
+
+        preg_match_all('/({{κλείδα-ελλ}})|(\[\[Κατηγορία:.*\]\])/Usi',$this->postfix,$erg);
+        $elems = array_unique($erg[0]);
+        sort($elems);
+
+        $this->postfix = implode(PHP_EOL,$elems);
+    }
+
     //////////////////////////////////////////////////////////////////
 
     private function isGeneralPage()
