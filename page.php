@@ -285,11 +285,13 @@ class Page
         foreach ($this->langs as list($ll,$t))
         {
             if (strpos($t,'{{δείτε'))
-              $this->disallowed_in_langs[] = $ll;
+              $this->disallowed_in_langs['δείτε'][] = $ll;
             if (strpos($t,'{{also'))
-              $this->disallowed_in_langs[] = $ll;
+              $this->disallowed_in_langs['also'][] = $ll;
             if (strpos($t,'[[Κατηγορία:'))
-              $this->disallowed_in_langs[] = $ll;
+              $this->disallowed_in_langs['Κατηγορία'][] = $ll;
+            if (strpos($t,'{{κλείδα-ελλ}}'))
+              $this->disallowed_in_langs['κλείδα-ελλ'][] = $ll;
         }
     }
 

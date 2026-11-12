@@ -123,7 +123,7 @@ class Bot
             $wait = true;
             switch ($cmd)
             {
-             case 'SORT':
+             case 'SORTLANGS':
                 $wait = $this->sort($param);
                 break;
              default:
