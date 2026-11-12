@@ -159,7 +159,7 @@ class Page
 
     public function moveEllToFooter()
     {
-        $this->movePatternToFooter('/{{κλείδα-ελλ}}/');
+        $this->movePatternToFooter('/(\s*{{κλείδα-ελλ}}\s*)/');
     }
 
     private function movePatternToFooter($pattern)
