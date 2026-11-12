@@ -440,6 +440,7 @@ class Bot
 
     private function signalHandler()
     {
+        if ($this->abort>0) die();
         $this->die('abort due to ctrl-C');
     }
 
