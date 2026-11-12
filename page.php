@@ -258,6 +258,9 @@ class Page
         if ($this->flags & self::CHECK_FOR_MAINHEADER_LANGS)
           if (preg_match('/^\s*==?[^=]+=+/',$this->prefix,$erg))
             $this->mainheader_langs[] = '';
+
+        if ($this->flags & self::CHECK_FOR_DISALLOWED_ITEMS_IN_LANGUAGES)
+          $this->checkDisallowedLanguageItems(true);
     }
 
     private function checkLangs()
@@ -280,14 +283,17 @@ class Page
           $this->checkOrderOfLangs();
     }
 
-    private function checkDisallowedLanguageItems()
+    private function checkDisallowedLanguageItems($prefix=false)
     {
         foreach ($this->langs as list($ll,$t))
         {
-            if (strpos($t,'{{δείτε'))
-              $this->disallowed_in_langs['δείτε'][] = $ll;
-            if (strpos($t,'{{also'))
-              $this->disallowed_in_langs['also'][] = $ll;
+            if (!$prefix)
+            {
+                if (strpos($t,'{{δείτε'))
+                  $this->disallowed_in_langs['δείτε'][] = $ll;
+                if (strpos($t,'{{also'))
+                  $this->disallowed_in_langs['also'][] = $ll;
+            }
             if (strpos($t,'[[Κατηγορία:'))
               $this->disallowed_in_langs['Κατηγορία'][] = $ll;
             if (strpos($t,'{{κλείδα-ελλ}}'))

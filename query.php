@@ -226,6 +226,7 @@ class Query
     {
         $also = array();
         $kat = array();
+        $ell = array();
         foreach ($this->disallowed_in_langs as $type => $tmp)
           foreach ($tmp as $word => $langs)
             switch ($type)
@@ -233,8 +234,12 @@ class Query
              case 'δείτε': case 'also':
                 $also[$word] = true;
                 break;
-             case 'Κατηγορία': case 'κλείδα-ελλ':
+             case 'Κατηγορία':
                 $kat[$word] = true;
+                break;
+             case 'κλείδα-ελλ':
+                $ell[$word] = true;
+                break;
             }
 
         foreach ($also as $word=>$_)
@@ -242,6 +247,9 @@ class Query
 
         foreach ($kat as $word=>$_)
           echo 'FIXKAT '.$word.PHP_EOL;
+
+        foreach ($ell as $word=>$_)
+          echo 'FIXELL '.$word.PHP_EOL;
     }
 
     private function help($error=false)
