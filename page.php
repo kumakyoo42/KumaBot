@@ -282,7 +282,7 @@ class Page
         $this->prefix = $parts[0];
         $this->langs = array();
         for ($i=1;$i<count($parts);$i+=2)
-          $this->langs[] = array($parts[$i],$parts[$i+1]);
+          $this->langs[] = array($parts[$i],ltrim($parts[$i+1]));
     }
 
     private function joinLanguageParts()
