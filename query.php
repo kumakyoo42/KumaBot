@@ -9,6 +9,13 @@ die();
 
 class Query
 {
+    static private $commands = array(
+                                     'langtemp' => Page::CHECK_FOR_BROKEN_LANGS,
+                                     'langsegs' => Page::CHECK_ORDER_OF_LANGS,
+                                     'wrongtemp' => Page::CHECK_FOR_DISALLOWED_ITEMS_IN_LANGUAGES,
+                                     'wrongheader' => Page::CHECK_FOR_MAINHEADER_LANGS
+                                     );
+
     private $argv;
     private $flags;
     private $bot;
@@ -47,28 +54,29 @@ class Query
         {
             $cmd = array_shift($this->argv);
 
-            switch ($cmd)
+            if (isset(Query::$commands[$cmd]))
             {
-             case 'langtemp':
-                $this->flags |= Page::CHECK_FOR_BROKEN_LANGS;
-                break;
-             case 'langsegs':
-                $this->flags |= Page::CHECK_ORDER_OF_LANGS;
-                break;
-             case 'wrongtemp':
-                $this->flags |= Page::CHECK_FOR_DISALLOWED_ITEMS_IN_LANGUAGES;
-                break;
-             case 'wrongheader':
-                $this->flags |= Page::CHECK_FOR_MAINHEADER_LANGS;
-                break;
-             case '-b':
-                $this->bot = true;
-                continue 2;
-             default:
-                $this->help('unknown command: '.$cmd);
+                $this->flags |= Query::$commands[$cmd];
+                $this->cmds[$cmd] = true;
             }
-
-            $this->cmds[$cmd] = true;
+            else
+            {
+                switch ($cmd)
+                {
+                 case 'all':
+                    foreach (Query::$commands as $cmd=>$flag)
+                    {
+                        $this->flags |= $flag;
+                        $this->cmds[$cmd] = true;
+                    }
+                    break;
+                 case '-b':
+                    $this->bot = true;
+                    break;
+                 default:
+                    $this->help('unknown command: '.$cmd);
+                }
+            }
         }
 
         if (empty($this->cmds))
@@ -250,6 +258,9 @@ OPTIONS
             create output which can be used as input for the bot
 
 COMMANDS
+        all
+            Execute all commands.
+
         langsegs
             Search for language segments that have not been sorted
             correctly, for duplicate language segments, and for
