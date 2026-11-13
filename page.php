@@ -322,7 +322,7 @@ class Page
             $this->mainheader_langs[] = '';
 
         if ($this->flags & self::CHECK_FOR_DISALLOWED_ITEMS_IN_LANGUAGES)
-          $this->checkDisallowedLanguageItems(true);
+          $this->checkDisallowedPrefixItems();
     }
 
     private function checkLangs()
@@ -352,22 +352,30 @@ class Page
             $this->footer_sorted = false;
     }
 
+    private function checkDisallowedPrefixItems()
+    {
+        $this->checkDisallowedItems($this->prefix);
+    }
+
     private function checkDisallowedLanguageItems($prefix=false)
     {
         foreach ($this->langs as list($ll,$t))
+          $this->checkDisallowedItems($t,$ll);
+    }
+
+    private function checkDisallowedItems($text, $lang='')
+    {
+        if ($lang!=='')
         {
-            if (!$prefix)
-            {
-                if (strpos($t,'{{δείτε'))
-                  $this->disallowed_in_langs['δείτε'][] = $ll;
-                if (strpos($t,'{{also'))
-                  $this->disallowed_in_langs['also'][] = $ll;
-            }
-            if (strpos($t,'[[Κατηγορία:'))
-              $this->disallowed_in_langs['Κατηγορία'][] = $ll;
-            if (strpos($t,'{{κλείδα-ελλ}}'))
-              $this->disallowed_in_langs['κλείδα-ελλ'][] = $ll;
+            if (strpos($text,'{{δείτε'))
+              $this->disallowed_in_langs['δείτε'][] = $lang;
+            if (strpos($text,'{{also'))
+              $this->disallowed_in_langs['also'][] = $lang;
         }
+        if (strpos($text,'[[Κατηγορία:'))
+          $this->disallowed_in_langs['Κατηγορία'][] = $lang;
+        if (strpos($text,'{{κλείδα-ελλ}}'))
+          $this->disallowed_in_langs['κλείδα-ελλ'][] = $lang;
     }
 
     private function checkOrderOfLangs()
