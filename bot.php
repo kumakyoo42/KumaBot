@@ -320,7 +320,7 @@ class Bot
         return array($id, $page);
     }
 
-    private function writePage($word, $id, $text, $comment)
+    private function writePage($word, $id, $text, $comment, $retry=true)
     {
         $fields = array('action' => 'edit',
                         'title' => $word,
@@ -357,7 +357,17 @@ class Bot
 
         $json = json_decode($result,true);
         if ($json===null)
-          $this->die('execution of curl failed: '.print_r($result,true));
+        {
+            if ($retry)
+            {
+                $this->log('write failed, retrying in 60 seconds...',true);
+                sleep(60);
+                writePage($word, $id, $text, $comment, false);
+                return;
+            }
+            
+            $this->die('execution of curl failed: '.print_r($result,true));
+        }
 
         if (!isset($json['edit']))
           $this->die('execution of curl failed: '.print_r($result,true));
