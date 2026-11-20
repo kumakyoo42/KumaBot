@@ -24,6 +24,7 @@ class Bot
     private $sleep = 30000;
     private $tasks = array();
     private $abort = 0;
+    private $test = false;
 
     private $success;
     private $skipped;
@@ -55,12 +56,21 @@ class Bot
             {
                 $line = trim($line);
                 if ($line=='') continue;
-                list($cmd,$param) = explode(' ',trim($line),2);
+                $tmp = explode(' ',trim($line),2);
+                $cmd = $tmp[0];
+                $param = $tmp[1]??'';
 
                 if ($cmd=='SLEEP')
                 {
                     $this->sleep = intval($param);
                     $this->log("\033[31;1mdelay set to ".($this->sleep/1000)." seconds\033[0m",true);
+                    continue;
+                }
+
+                if ($cmd=='TEST')
+                {
+                    $this->test = true;
+                    $this->log("\033[31;1mrunning in test mode, no write operations\033[0m",true);
                     continue;
                 }
 
@@ -129,6 +139,9 @@ class Bot
              case 'FIXKAT': case 'FIXELL': case 'SORTFOOT':
                 $wait = $this->fixFooter($param, $cmd);
                 break;
+             case 'SPECIAL':
+                $wait = $this->doSpecialTask($param);
+                break;
              default:
                 $this->die('unknown command: '.$cmd);
                 break;
@@ -139,6 +152,39 @@ class Bot
               $this->sleep();
         }
         $this->log('execution of tasks finished');
+    }
+
+    //////////////////////////////////////////////////////////////////
+
+    private function doSpecialTask($word)
+    {
+        $this->log('applying special task to "'.$word.'"');
+
+        $page = $this->readPage($word);
+        if ($page===false)
+        {
+            $this->log('reading page failed. Skipping.');
+            $this->skipped++;
+            return false;
+        }
+        list($id,$wikitext) = $page;
+
+        # Do something useful here instead
+        $new_text = $wikitext;
+
+        if ($new_text==$wikitext)
+        {
+            $this->log('nothing changed after processing. Skipping.');
+            $this->skipped++;
+            return false;
+        }
+
+        # Add a useful comment here
+        $this->writePage($word, $id, $new_text, '');
+
+        $this->log('"'.$word.'" successfully changed');
+        $this->success++;
+        return true;
     }
 
     //////////////////////////////////////////////////////////////////
@@ -322,6 +368,12 @@ class Bot
 
     private function writePage($word, $id, $text, $comment, $retry=true)
     {
+        if ($this->test)
+        {
+            $this->log("test: simulated write to ".$word);
+            return;
+        }
+
         $fields = array('action' => 'edit',
                         'title' => $word,
                         'text' => $text,
@@ -365,7 +417,7 @@ class Bot
                 writePage($word, $id, $text, $comment, false);
                 return;
             }
-            
+
             $this->die('execution of curl failed: '.print_r($result,true));
         }
 
@@ -387,8 +439,11 @@ class Bot
 
     public function writeStartLog()
     {
-        $this->log('ready to go, waiting 10 seconds',true);
-        sleep(10);
+        if (!$this->test)
+        {
+            $this->log('ready to go, waiting 10 seconds',true);
+            sleep(10);
+        }
         $this->installSignalHandler();
 
         $h = $this->readPage($this->log_page);
